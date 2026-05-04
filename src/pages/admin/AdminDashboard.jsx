@@ -63,7 +63,7 @@ export default function AdminDashboard() {
           {/* Quick actions */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             <Link
-              to="/admin/rooms/new"
+              to="/admin/rooms"
               className="bg-forest-mid text-cream p-5 flex items-center gap-4 hover:bg-forest-dark transition-colors"
             >
               <span className="text-2xl">➕</span>
