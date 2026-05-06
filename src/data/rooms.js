@@ -1,117 +1,143 @@
-export const ROOMS = [
-  {
-    id: 'classic-1',
-    type: 'room',
-    name: 'Classic Deluxe Room',
-    slug: 'classic-deluxe',
-    price: 3500,
-    capacity: 2,
-    size: '320 sq ft',
-    images: [
-      '/images/room-1a.jpg',
-      '/images/room-1b.jpg',
-      '/images/room-1c.jpg',
-    ],
-    amenities: ['AC', 'Ceiling Fan', 'TV', 'Attached Bathroom', 'Work Desk', 'Room Service'],
-    description: 'Warmly appointed with rich maroon and gold accents, the Classic Deluxe Room offers a spacious platform bed, elegant wall sconces, and an attached bathroom with modern fittings. Select rooms open to a private balcony overlooking our lush garden.',
-    highlights: ['Platform king bed', 'Marble flooring', 'Wall sconces', 'Mirror alcove'],
-    badge: 'Most Popular',
-  },
-  {
-    id: 'classic-2',
-    type: 'room',
-    name: 'Classic Garden View',
-    slug: 'classic-garden',
-    price: 3000,
-    capacity: 2,
-    size: '300 sq ft',
-    images: [
-      '/images/room-2a.jpg',
-      '/images/room-1c.jpg',  // shared bathroom (same room type)
-    ],
-    amenities: ['AC', 'Ceiling Fan', 'TV', 'Attached Bathroom', 'Work Desk'],
-    description: 'Light-filled rooms facing our palm-lined garden corridor. French windows frame the greenery, bringing nature indoors while you unwind in comfort.',
-    highlights: ['Garden-facing balcony', 'King or twin beds', 'Custom curtains'],
-    badge: null,
-  },
-]
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import RoomCard from '../components/RoomCard'
 
-export const COTTAGES = [
-  {
-    id: 'cottage-1',
-    type: 'cottage',
-    name: 'Forest Cottage',
-    slug: 'forest-cottage',
-    price: 5500,
-    capacity: 2,
-    size: '450 sq ft',
-    images: [
-      '/images/cottage-1a.jpg',
-      '/images/cottage-1b.jpg',
-      '/images/cottage-1c.jpg',
-      '/images/cottage-1d.jpg',
-    ],
-    amenities: ['AC', 'LED TV', 'Mini Fridge', 'Work Desk', 'Wardrobe', 'Private Porch', 'Premium Bathroom'],
-    description: 'Step into your own corner of Goa\'s forest. Soaring pine A-frame ceilings, warm wooden walls, and sweeping marble floors make the Forest Cottage an unforgettable retreat. Each cottage has a private verandah with a rattan lounge chair and direct garden access.',
-    highlights: ['A-frame pine ceiling', 'Private verandah', 'Floating vanity bathroom', 'Mini fridge + kettle'],
-    badge: 'Premium',
-  },
-  {
-    id: 'cottage-2',
-    type: 'cottage',
-    name: 'Pond View Cottage',
-    slug: 'pond-view-cottage',
-    price: 6000,
-    capacity: 2,
-    size: '480 sq ft',
-    images: [
-      '/images/cottage-2a.jpg',
-      '/images/cottage-2b.jpg',
-      '/images/cottage-1c.jpg',  // shared bathroom shot
-      '/images/cottage-1d.jpg',  // shared porch shot
-    ],
-    amenities: ['AC', 'LED TV', 'Mini Fridge', 'Work Desk', 'Wardrobe', 'Private Porch', 'Premium Bathroom', 'Pond View'],
-    description: 'Overlooking our serene lotus pond and the thatched gazebo, the Pond View Cottage pairs rustic wooden architecture with thoughtful luxury. Fall asleep to the sounds of Goa\'s night and wake up to shimmering water through your window.',
-    highlights: ['Direct pond view', 'Gazebo access', 'A-frame ceiling', 'Large glass windows'],
-    badge: 'Best View',
-  },
-]
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
-export const ALL_UNITS = [...ROOMS, ...COTTAGES]
+export default function RoomsPage() {
+  const [searchParams] = useSearchParams()
+  const typeParam      = searchParams.get('type') || 'all'
 
-export const ADDONS = [
-  { id: 'breakfast', label: 'Breakfast (per person)', price: 350, icon: '☕' },
-  { id: 'dinner',    label: 'Dinner (per person)',    price: 550, icon: '🍽️' },
-  { id: 'pickup',    label: 'Airport / Station Pickup', price: 800, icon: '🚗' },
-  { id: 'drop',      label: 'Airport / Station Drop',   price: 800, icon: '🚗' },
-  { id: 'extra-bed', label: 'Extra Bed',               price: 700, icon: '🛏️' },
-]
+  const [allRooms, setAllRooms] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [error,    setError]    = useState('')
+  const [filter,   setFilter]   = useState(typeParam)
+  const [sortBy,   setSortBy]   = useState('default')
+  const [guests,   setGuests]   = useState(0)
 
-export const AMENITIES = [
-  { icon: '🌿', title: 'Lotus Pond & Gazebo' },
-  { icon: '🌳', title: 'Garden Walks' },
-  { icon: '🍳', title: 'In-house Dining' },
-  { icon: '🚗', title: 'Pickup & Drop' },
-  { icon: '📶', title: 'Free Wi-Fi' },
-  { icon: '❄️', title: 'Air Conditioning' },
-  { icon: '🔒', title: '24/7 Security' },
-  { icon: '🅿️', title: 'Free Parking' },
-]
+  // Load rooms from backend
+  useEffect(() => {
+    async function fetchRooms() {
+      setLoading(true)
+      try {
+        const res  = await fetch(`${API}/api/rooms`)
+        const data = await res.json()
+        if (data?.rooms) setAllRooms(data.rooms)
+        else setError('Rooms load nahi huye')
+      } catch {
+        setError('Backend se connect nahi ho pa raha')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchRooms()
+  }, [])
 
-export const TESTIMONIALS = [
-  {
-    name: 'Priya Sharma', location: 'Mumbai', rating: 5,
-    text: 'The Forest Cottage was everything we hoped for. Pine ceilings, a private porch, and absolute silence — pure magic. We\'re already planning our next trip.',
-    stay: 'Forest Cottage · 3 nights',
-  },
-  {
-    name: 'Rahul & Anjali', location: 'Bengaluru', rating: 5,
-    text: 'Woke up to a lotus pond view every morning. The staff was warm and the property is exactly like the photos — lush, peaceful, and beautiful.',
-    stay: 'Pond View Cottage · 4 nights',
-  },
-  {
-    name: 'Vikram Nair', location: 'Delhi', rating: 5,
-    text: 'Finally found a place in Goa that\'s away from the chaos. The Classic Room was spotless and cosy. Great value for the experience.',
-    stay: 'Classic Deluxe Room · 2 nights',
-  },
-]
+  useEffect(() => { setFilter(typeParam) }, [typeParam])
+
+  // Filter + sort
+  let units = allRooms
+  if (filter === 'room')    units = allRooms.filter(u => u.type === 'ROOM')
+  if (filter === 'cottage') units = allRooms.filter(u => u.type === 'COTTAGE')
+  if (guests > 0)           units = units.filter(u => u.capacity >= guests)
+  if (sortBy === 'price-asc')  units = [...units].sort((a, b) => a.price - b.price)
+  if (sortBy === 'price-desc') units = [...units].sort((a, b) => b.price - a.price)
+
+  // Count by type
+  const roomCount    = allRooms.filter(u => u.type === 'ROOM').length
+  const cottageCount = allRooms.filter(u => u.type === 'COTTAGE').length
+
+  return (
+    <main className="pt-20">
+
+      {/* Page header */}
+      <section className="relative bg-forest-dark py-24 overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <img src="/images/cottage-10.jpg" alt=""
+               className="w-full h-full object-cover"
+               onError={e => { e.target.style.display='none' }} />
+          <div className="absolute inset-0 bg-forest-dark/70" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 text-center">
+          <span className="section-label text-gold/70">
+            {roomCount} Rooms + {cottageCount} Cottages
+          </span>
+          <h1 className="font-display text-5xl md:text-6xl text-cream font-light">
+            Choose Your Stay
+          </h1>
+          <span className="block w-12 h-[1px] bg-gold mx-auto mt-5" />
+        </div>
+      </section>
+
+      {/* Filters bar */}
+      <section className="sticky top-20 z-30 bg-cream/95 backdrop-blur-sm border-b border-cream-dark shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4 flex flex-wrap gap-4 items-center justify-between">
+          <div className="flex gap-2">
+            {[
+              { val: 'all',     label: `All Stays (${allRooms.length})` },
+              { val: 'room',    label: `Rooms (${roomCount})` },
+              { val: 'cottage', label: `Cottages (${cottageCount})` },
+            ].map(({ val, label }) => (
+              <button key={val} onClick={() => setFilter(val)}
+                className={`font-body text-xs tracking-[0.12em] uppercase px-4 py-2 border transition-all duration-200 ${
+                  filter === val
+                    ? 'bg-forest-mid text-cream border-forest-mid'
+                    : 'bg-transparent text-ink/60 border-ink/20 hover:border-forest-mid hover:text-forest-mid'
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <label className="font-body text-xs text-ink/50 tracking-wide">Guests</label>
+              <select value={guests} onChange={e => setGuests(Number(e.target.value))}
+                className="font-body text-xs border border-ink/20 px-2 py-1 bg-transparent focus:outline-none focus:border-forest-mid">
+                <option value={0}>Any</option>
+                {[1,2,3,4].map(n => <option key={n} value={n}>{n}+</option>)}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="font-body text-xs text-ink/50 tracking-wide">Sort</label>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+                className="font-body text-xs border border-ink/20 px-2 py-1 bg-transparent focus:outline-none focus:border-forest-mid">
+                <option value="default">Default</option>
+                <option value="price-asc">Price: Low → High</option>
+                <option value="price-desc">Price: High → Low</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Grid */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 py-14">
+        {loading ? (
+          <div className="text-center py-24">
+            <div className="font-display text-3xl text-ink/20 font-light animate-pulse">Loading...</div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-24">
+            <p className="font-body text-red-500">{error}</p>
+          </div>
+        ) : units.length === 0 ? (
+          <div className="text-center py-24">
+            <p className="font-display text-3xl text-ink/30 font-light">No stays match your filters.</p>
+          </div>
+        ) : (
+          <>
+            <p className="font-body text-sm text-ink/40 mb-6">
+              Showing {units.length} {units.length === 1 ? 'stay' : 'stays'}
+            </p>
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {units.map(unit => (
+                <RoomCard key={unit.id} room={unit} />
+              ))}
+            </div>
+          </>
+        )}
+      </section>
+    </main>
+  )
+}
