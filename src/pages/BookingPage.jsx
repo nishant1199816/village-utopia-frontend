@@ -67,7 +67,73 @@ export default function BookingPage() {
 
   const handleNext = () => { if (validateStep()) setStep(s => Math.min(s + 1, STEPS.length - 1)) }
   const handleBack = () => setStep(s => Math.max(s - 1, 0))
-  const handlePayment = () => alert('Razorpay integration coming soon!\n\nAmount: ₹' + payNow.toLocaleString())
+  const handlePayment = async () => {
+    try {
+      // 1. Create order on backend
+      const res = await fetch(`${API}/api/bookings/create-order`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId:          roomId,
+          checkin:         checkIn.toISOString().split('T')[0],
+          checkout:        checkOut.toISOString().split('T')[0],
+          guests:          guests,
+          guestName:       form.name,
+          guestEmail:      form.email,
+          guestPhone:      form.phone,
+          specialRequests: form.special,
+          addons:          addons,
+          paymentType:     payType.toUpperCase(),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { alert(data.error || 'Booking create karne mein problem'); return }
+
+      // 2. Open Razorpay checkout
+      const options = {
+        key:      import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount:   data.amount * 100,
+        currency: 'INR',
+        name:     'Village Utopia Cottages',
+        order_id: data.razorpayOrderId,
+        handler: async (response) => {
+          // 3. Verify payment on backend
+          const vRes = await fetch(`${API}/api/bookings/verify-payment`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id:   response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature:  response.razorpay_signature,
+              bookingId:           data.bookingId,
+            }),
+          })
+          const vData = await vRes.json()
+          if (vData.success) {
+            alert(`✅ Booking Confirmed!\n\nRef: ${vData.bookingRef}\n\nThank you for booking with Village Utopia Cottages!`)
+            navigate('/')
+          } else {
+            alert('Payment verification failed. Contact us at stay@villageutopia.in')
+          }
+        },
+        prefill: {
+          name:    form.name,
+          email:   form.email,
+          contact: form.phone,
+        },
+        theme: { color: '#C9A96E' },
+        modal: {
+          ondismiss: () => console.log('Payment modal closed')
+        }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+
+    } catch (err) {
+      alert('Error: ' + err.message)
+    }
+  }
 
   return (
     <main className="pt-20 bg-cream min-h-screen">
